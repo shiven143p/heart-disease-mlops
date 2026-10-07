@@ -74,3 +74,20 @@ Commands to execute in sequence:
     For Testing:
     pytest --version
     jupyter --version
+
+    Task 1A — Reproducible Data Acquisition
+
+    Download from UCI
+       ↓
+Extract 13 features + target
+       ↓
+Convert target to binary
+       ↓
+Save reproducible CSV files
+python -m src.data.download
+
+python -c "import pandas as pd; df=pd.read_csv('data/processed/heart_disease.csv'); print(df.head()); print(df.shape); print(df.dtypes)"
+
+python -c "import pandas as pd; df=pd.read_csv('data/processed/heart_disease.csv'); print(df.isnull().sum())"
+
+python -m src.data.validate

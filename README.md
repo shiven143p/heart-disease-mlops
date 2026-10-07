@@ -75,7 +75,8 @@ Commands to execute in sequence:
     pytest --version
     jupyter --version
 
-    Task 1A — Reproducible Data Acquisition
+
+Task 1A — Reproducible Data Acquisition
 
     Download from UCI
        ↓
@@ -84,6 +85,18 @@ Extract 13 features + target
 Convert target to binary
        ↓
 Save reproducible CSV files
+
+
+We accomplished Task 1:
+“Obtain the dataset (provide download script or instructions)”
+
+✅ src/data/download.py
+“Binary target presence/absence of heart disease”
+
+✅ Explicit conversion from UCI num to target
+Production readiness / reproducibility
+
+✅ Dataset can be recreated on another machine using:
 python -m src.data.download
 
 python -c "import pandas as pd; df=pd.read_csv('data/processed/heart_disease.csv'); print(df.head()); print(df.shape); print(df.dtypes)"
@@ -91,3 +104,29 @@ python -c "import pandas as pd; df=pd.read_csv('data/processed/heart_disease.csv
 python -c "import pandas as pd; df=pd.read_csv('data/processed/heart_disease.csv'); print(df.isnull().sum())"
 
 python -m src.data.validate
+
+
+Task 1B: Exploratory Data Analysis
+Dataset overview
+      ↓
+Data types
+      ↓
+Missing values
+      ↓
+Duplicate rows
+      ↓
+Summary statistics
+      ↓
+Target/class balance
+      ↓
+Numerical distributions
+      ↓
+Categorical distributions
+      ↓
+Feature vs target analysis
+      ↓
+Correlation heatmap
+      ↓
+EDA conclusions
+      ↓
+Preprocessing decisions

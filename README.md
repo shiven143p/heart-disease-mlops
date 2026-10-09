@@ -60,6 +60,7 @@ pydantic
 prometheus-client
 httpx
 ruff
+joblib
 
 Commands to execute in sequence:
     
@@ -152,9 +153,38 @@ Most importantly, build_preprocessor() returns an unfitted transformer. We do no
 
 3. Run the unit tests 
 
-      python -m pytest tests/test_preprocessing.py -v
+            python -m pytest tests/test_preprocessing.py -v
 
 4. Smoke Test the preprocessing on the real UCI dataset src/features/check_preprocessing.py
 
-      python -m src.features.check_preprocessing
+            python -m src.features.check_preprocessing
 
+## Task 2B: Model Training, Hyperparameter Tuning, Cross-Validation, and Evaluation
+
+![alt text](image-1.png)
+
+1. Create src/models/evaluate.py
+2. Create src/models/train.py
+
+It will:
+      1. Load the dataset.
+      2. Perform a stratified train/test split.
+      3. Construct a complete preprocessing-plus-classifier pipeline.
+      4. Tune both classifiers with stratified 5-fold CV.
+      5. Compare their cross-validation ROC-AUC scores.
+      6. Select the best-performing model.
+      7. Evaluate it once on the held-out test set.
+      8. Save the complete pipeline and evaluation artifacts.
+
+- GridSearchCV runs preprocessing inside each CV fold, avoiding leakage.
+- n_jobs=-1 uses available CPU cores for the search. On a resource-limited Virtual Lab, we can change this to 1.
+- refit=True automatically fits the best hyperparameter configuration on the full training split.
+- The test set is not used to choose between Logistic Regression and Random Forest.
+- The saved joblib artifact contains the entire fitted pipeline, not just the classifier.
+
+      python -m src.models.train
+
+3. Verify the saved artifacts under models/ and reports/model_evaluation
+4. Add model tests tests/test_model.py
+
+      python -m pytest tests/ -v

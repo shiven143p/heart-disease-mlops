@@ -39,3 +39,10 @@ mlruns/
 build/
 dist/
 *.egg-info/
+
+# Generated trained model artifacts
+models/*.joblib
+models/*.json
+
+# Generated evaluation artifacts
+reports/model_evaluation/

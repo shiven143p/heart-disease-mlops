@@ -416,3 +416,121 @@ Note. Add FastAPI dependencies and install (if not done yet)
             POST /predict
             ↓
             Upload Artifacts
+
+## Task 7 — Production Deployment using Kubernetes
+
+![alt text](image-6.png)
+
+Note: We'll use two replicas to demonstrate Kubernetes orchestration and availability. Each pod will load its own copy of the trained model.
+
+Note. Check Kubernetes tools and install (if not done yet)
+
+
+1. Create Kubernetes deployment manifests 
+
+      kubernetes/deployment.yaml:
+
+      - replicas: 2 requests two running pods.
+      - The readiness probe checks whether the application is ready to serve requests.
+      - The liveness probe detects an unhealthy application.
+      - Resource requests and limits provide basic resource management.
+      - imagePullPolicy: Never tells Kubernetes to use a locally available image.
+      
+      kubernetes/service.yaml:
+
+      - This exposes port 80 on the Kubernetes Service and forwards traffic to port 8000 in the FastAPI containers.
+      - On Minikube, a LoadBalancer Service may remain in EXTERNAL-IP: <pending> until a tunnel is started. That's normal for local Kubernetes.
+
+2. Start Minikube
+
+            minikube start --driver=docker --cpus=2 --memory=4096
+            kubectl get nodes
+
+            Inspection:
+            kubectl get nodes -o wide
+            kubectl get pods -n kube-system -o wide
+            kubectl describe node minikube
+            minikube status
+            
+
+Example: kindnet-n7j8j docker image is failed to download with minikube cluster
+![alt text](image-7.png)
+
+            kubectl describe pod -n kube-system kindnet-n7j8
+
+![alt text](image-8.png)
+
+Resolev steps :
+      - Download the networking image:
+
+            docker pull docker.io/kindest/kindnetd:v20260820-69b56db7
+
+      - Copy the image into Minikube
+
+            minikube image load docker.io/kindest/kindnetd:v20260820-69b56db7
+
+      - Restart the failed networking pod
+
+            kubectl delete pod -n kube-system -l app=kindnet
+
+      - Check whether networking is working
+
+![alt text](image-9.png)
+
+            kubectl get nodes
+
+![alt text](image-10.png)
+
+3. Load the Docker image into Minikube
+      
+      local image:heart-disease-api:1.0
+      
+            minikube image load heart-disease-api:1.0
+            Verify: minikube image ls
+
+4. Deploy to Kubernetes
+
+            kubectl apply -f kubernetes/deployment.yaml
+            kubectl apply -f kubernetes/service.yaml
+
+            Verify:
+            kubectl get deployments
+            kubectl get pods
+            kubectl get services
+
+            Wait for both replica:
+            kubectl rollout status deployment/heart-disease-api --timeout=180s
+
+            Inspect:
+            kubectl describe pods -l app=heart-disease-api
+            kubectl logs deployment/heart-disease-api --all-pods=true --tail=50
+
+5. Expose the API
+
+            minikube service heart-disease-service --url
+
+            If the LoadBalancer external IP is pending, open another terminal and run:
+            minikube tunnel 
+
+            Inspect:
+            kubectl get services
+
+            Port forwarding (if only needed)
+            kubectl port-forward service/heart-disease-service 8080:80
+
+6. Verify Kubernetes inference (same swagger check)
+7. Demonstrate Kubernetes scaling 
+
+            kubectl scale deployment heart-disease-api --replicas=3
+
+            verify:
+            kubectl rollout status deployment/heart-disease-api
+            kubectl get pods -l app=heart-disease-api
+
+![alt text](image-11.png)
+
+8. Restore original configuration
+
+            kubectl scale deployment heart-disease-api --replicas=2
+
+![alt text](image-12.png)

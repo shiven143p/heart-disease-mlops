@@ -672,8 +672,14 @@ Note: Install prometheus-client (if not done yet)
 
 10. Create the Grafana dashboard
 Create a dashboard with four panels.
-- Panel	PromQL query
-- Prediction requests over time	sum(rate(heart_disease_http_requests_total{endpoint="/predict"}[5m]))
-- Prediction counts by class	sum by (prediction) (heart_disease_predictions_total)
-- Average API latency	sum(rate(heart_disease_http_request_duration_seconds_sum{endpoint="/predict"}[5m])) / sum(rate(heart_disease_http_request_duration_seconds_count{endpoint="/predict"}[5m]))
-- Prediction processing errors	sum(heart_disease_prediction_errors_total)
+  #### Panel	                  -  PromQL query
+- Prediction requests over time	- sum(rate(heart_disease_http_requests_total{endpoint="/predict"}[5m]))
+- Prediction counts by class	      - sum by (prediction) (heart_disease_predictions_total)
+- Average API latency	            - sum(rate(heart_disease_http_request_duration_seconds_sum{endpoint="/predict"}[5m])) / sum(rate(heart_disease_http_request_duration_seconds_count{endpoint="/predict"}[5m]))
+- Prediction processing errors	- sum(heart_disease_prediction_errors_total)
+
+11. Create traffic for dashboard data:
+
+            python scripts/generate_test_traffic.py
+
+12. Save the Grafana dashboard configuration

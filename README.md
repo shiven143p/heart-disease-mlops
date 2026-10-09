@@ -684,7 +684,7 @@ Create a dashboard with four panels.
 
 12. Save the Grafana dashboard configuration
 
-## Task 9 — Automated Continuous Deployment (CD) and End-to-End MLOps Pipeline
+## Task 9 — Automated Continuous Deployment (CD) (Temporary Cluster)
 
 ![alt text](image-15.png)
 
@@ -713,4 +713,43 @@ Create a dashboard with four panels.
             3. Open Package settings.
             4. Under visibility settings, change it to Public, if permitted.
 
-6. Automate Kubernetes deployment testing (We will use kind (Kubernetes in Docker))
+6. Automate Kubernetes deployment testing .github/workflows/ci.yml
+      - We will use kind (Kubernetes in Docker)
+
+
+"The GitHub Actions Kubernetes cluster is temporary. It is created for testing and removed when the job finishes. The persistent Minikube deployment is separate and was deployed manually."
+This is automated Kubernetes deployment and verification, not  that GitHub Actions is continuously updating a permanent production environment."
+
+Why can't we keep the GitHub Actions Kubernetes cluster running?
+"Our kind cluster is created on a GitHub-hosted runner — a temporary machine provided by GitHub Actions.
+Even if we never execute kind delete cluster, the cluster disappears because the runner itself is temporary."
+
+Now pipeline is 
+
+            Git Push to main
+
+            Automated linting and unit tests
+
+            Dataset acquisition and ML model training
+
+            MLflow experiment tracking
+
+            Docker build and container smoke tests
+
+            Publish versioned image to GHCR
+
+            Create temporary Kubernetes cluster
+
+            Deploy two application replicas
+
+            Verify health and prediction endpoints
+
+            Upload deployment evidence
+
+### Improvement : Automated Kubernetes Rollback Validation
+1. Create a rollback validation script scripts/validate_rollback.sh
+ - Reads the current working image, deliberately attempts to replace it with an invalid image, waits for that deployment to fail, and then restores the previous version.
+
+ 2. Create the GitHub Actions rollback workflow .github/workflows/rollback-test.yml
+ 3. Run the rollback test from GitHub
+

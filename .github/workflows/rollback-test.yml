@@ -1,0 +1,159 @@
+
+name: Kubernetes Rollback Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Known-good GHCR image tag (Git commit SHA)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  rollback-validation:
+    name: Deploy, Break, Roll Back and Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create temporary Kubernetes cluster
+        uses: helm/kind-action@v1.12.0
+        with:
+          cluster_name: heart-disease-rollback
+
+      - name: Authenticate to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      
+      - name: Pull known-good Docker image
+        env:
+          REPOSITORY: ${{ github.repository }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          REPO_LOWER=$(echo "$REPOSITORY" | tr '[:upper:]' '[:lower:]')
+          IMAGE="ghcr.io/${REPO_LOWER}:${IMAGE_TAG}"
+
+          docker pull "$IMAGE"
+
+          kind load docker-image "$IMAGE" \
+            --name heart-disease-rollback
+
+          echo "GOOD_IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Deploy known-good version
+        run: |
+          bash scripts/deploy_kubernetes.sh "$GOOD_IMAGE"
+
+      - name: Verify initial deployment
+        run: |
+          kubectl get deployments
+          kubectl get pods
+          kubectl rollout status \
+            deployment/heart-disease-api \
+            --timeout=180s
+
+      - name: Simulate failure and validate rollback
+        run: |
+          bash scripts/validate_rollback.sh
+
+      - name: Verify restored API
+        run: |
+          kubectl port-forward \
+            service/heart-disease-service \
+            8080:80 > /tmp/rollback-port-forward.log 2>&1 &
+
+          python - <<'PY'
+          import json
+          import time
+          import urllib.request
+
+          base = "http://127.0.0.1:8080"
+
+          for _ in range(30):
+              try:
+                  with urllib.request.urlopen(
+                      base + "/health", timeout=5
+                  ) as response:
+                      health = json.load(response)
+
+                  if health["model_loaded"]:
+                      break
+              except Exception:
+                  time.sleep(2)
+          else:
+              raise RuntimeError("Restored API is unhealthy")
+
+          patient = {
+              "age": 55,
+              "sex": 1,
+              "cp": 2,
+              "trestbps": 140,
+              "chol": 250,
+              "fbs": 0,
+              "restecg": 1,
+              "thalach": 150,
+              "exang": 0,
+              "oldpeak": 1.2,
+              "slope": 2,
+              "ca": 0,
+              "thal": 3,
+          }
+
+          request = urllib.request.Request(
+              base + "/predict",
+              data=json.dumps(patient).encode(),
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+
+          with urllib.request.urlopen(request, timeout=10) as response:
+              result = json.load(response)
+
+          assert result["prediction"] in (0, 1)
+          assert 0 <= result["probability"] <= 1
+          assert 0 <= result["confidence"] <= 1
+
+          print("Rollback API verification passed")
+          print(result)
+          PY
+
+      - name: Capture rollback evidence
+        if: always()
+        run: |
+          mkdir -p rollback-evidence
+
+          kubectl get deployments -o wide \
+            > rollback-evidence/deployments.txt || true
+
+          kubectl get pods -o wide \
+            > rollback-evidence/pods.txt || true
+
+          kubectl rollout history \
+            deployment/heart-disease-api \
+            > rollback-evidence/rollout-history.txt || true
+
+          kubectl describe deployment heart-disease-api \
+            > rollback-evidence/deployment-details.txt || true
+
+          kubectl get events --sort-by=.lastTimestamp \
+            > rollback-evidence/events.txt || true
+
+      - name: Upload rollback evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kubernetes-rollback-evidence
+          path: rollback-evidence/
+          if-no-files-found: warn
+          retention-days: 14

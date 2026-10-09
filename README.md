@@ -161,7 +161,7 @@ Most importantly, build_preprocessor() returns an unfitted transformer. We do no
 
 ## Task 2B: Model Training, Hyperparameter Tuning, Cross-Validation, and Evaluation
 
-![alt text](image-1.png)
+![alt text](archimg/image-1.png)
 
 Note: Install joblib (if not done yet)
 
@@ -209,10 +209,10 @@ It will:
             recall: 0.9286
             f1: 0.8814
             roc_auc: 0.9654 
-      ![alt text](image-2.png)
+      ![alt text](archimg/image-2.png)
 
 ## Task 3 — MLflow Experiment Tracking
-![alt text](image-3.png)
+![alt text](archimg/image-3.png)
 
 Component	            Technology
 Experiment tracking	MLflow
@@ -263,7 +263,7 @@ Security note: cloudpickle artifacts must only be loaded from trusted sources be
 
 ## Task 4 — Model Packaging & Reproducibility
 
-![alt text](image-4.png)
+![alt text](archimg/image-4.png)
 
 Note: Verify your existing model artifact models/heart_disease_pipeline.joblib and inspect the metadata models/model_metadata.json
 
@@ -312,7 +312,7 @@ Note: Verify your existing model artifact models/heart_disease_pipeline.joblib a
 
 ## Task 5 — CI/CD Pipeline & Automated Testing
 
-![alt text](image-5.png)
+![alt text](archimg/image-5.png)
 
 1. Install Ruff and check code quality
 
@@ -419,7 +419,7 @@ Note. Add FastAPI dependencies and install (if not done yet)
 
 ## Task 7 — Production Deployment using Kubernetes
 
-![alt text](image-6.png)
+![alt text](archimg/image-6.png)
 
 Note: We'll use two replicas to demonstrate Kubernetes orchestration and availability. Each pod will load its own copy of the trained model.
 
@@ -454,11 +454,11 @@ Note. Check Kubernetes tools and install (if not done yet)
             
 
 Example: kindnet-n7j8j docker image is failed to download with minikube cluster
-![alt text](image-7.png)
+![alt text](archimg/image-7.png)
 
             kubectl describe pod -n kube-system kindnet-n7j8
 
-![alt text](image-8.png)
+![alt text](archimg/image-8.png)
 
 Resolev steps :
       - Download the networking image:
@@ -475,11 +475,11 @@ Resolev steps :
 
       - Check whether networking is working
 
-![alt text](image-9.png)
+![alt text](archimg/image-9.png)
 
             kubectl get nodes
 
-![alt text](image-10.png)
+![alt text](archimg/image-10.png)
 
 3. Load the Docker image into Minikube
       
@@ -527,17 +527,17 @@ Resolev steps :
             kubectl rollout status deployment/heart-disease-api
             kubectl get pods -l app=heart-disease-api
 
-![alt text](image-11.png)
+![alt text](archimg/image-11.png)
 
 8. Restore original configuration
 
             kubectl scale deployment heart-disease-api --replicas=2
 
-![alt text](image-12.png)
+![alt text](archimg/image-12.png)
 
 ## Task 8 — Monitoring & Logging
 
-![alt text](image-13.png)
+![alt text](archimg/image-13.png)
 
 To know:
 - How many requests were received?
@@ -606,7 +606,7 @@ Note: Install prometheus-client (if not done yet)
 - Prometheus periodically visits /metrics and saves that information.
 - Grafana reads the saved information and displays graphs.
 
-![alt text](image-14.png)
+![alt text](archimg/image-14.png)
 
 1. Create the monitoring directory
 
@@ -686,7 +686,7 @@ Create a dashboard with four panels.
 
 ## Task 9 — Automated Continuous Deployment (CD) (Temporary Cluster)
 
-![alt text](image-15.png)
+![alt text](archimg/image-15.png)
 
 1. Create a reusable Kubernetes deployment script scripts/
 2. Create the registry-based Kubernetes manifest

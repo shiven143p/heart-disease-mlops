@@ -258,3 +258,52 @@ Note: Install mlflow (if not done yet)
 
 MLflow supports cloudpickle serialization for scikit-learn models. This avoids the skops trusted-type validation that is causing your error.
 Security note: cloudpickle artifacts must only be loaded from trusted sources because deserialization can execute arbitrary code.
+
+## Task 4 — Model Packaging & Reproducibility
+
+![alt text](image-4.png)
+
+Note: Verify your existing model artifact models/heart_disease_pipeline.joblib and inspect the metadata models/model_metadata.json
+
+1. Create a reusable inference module src/models/predict.py
+      
+      There are two different probability-related fields:
+      - probability: Estimated probability assigned to the positive class (target = 1).
+      - confidence: Probability assigned to whichever class the model predicted.
+
+2. Create a sample inference script src/models/check_inference.py
+
+            python -m src.models.check_inference
+
+3. Add inference unit tests tests/test_inference.py
+
+            python -m pytest tests/ -v
+
+      These tests deliberately use a fake model. That means they can run in GitHub Actions even before a trained model artifact exists.
+
+4. Record your environment dependencies
+
+            python -m pip freeze > requirements-lock.txt
+
+      - requirements.txt - Direct project dependencies
+      - requirements-lock.txt - Exact installed versions for reproduction
+
+      Note: To reproduce the exact dependency versions in a clean environment:
+
+            python -m pip install -r requirements-lock.txt
+
+5. Create an environment verification script src/check_environment.py
+
+            python -m src.check_environment
+
+6. Verify the model is deterministic
+
+            python -c "from src.models.check_inference import SAMPLE_PATIENT; from src.models.predict import load_model, predict_heart_disease; model=load_model(); a=predict_heart_disease(model,SAMPLE_PATIENT); b=predict_heart_disease(model,SAMPLE_PATIENT); assert a==b; print('Deterministic inference passed:',a)"
+
+7. Add setup and reproduction instructions docs/reproducibility.md
+8. Add an artifact integrity check
+
+      sha256sum models/heart_disease_pipeline.joblib > models/model.sha256 (This produces a SHA-256 checksum)
+
+      Later, the checksum can be used to verify that the model artifact has not changed during copying or deployment.
+      Note that retraining may produce a different binary checksum even when predictions and metrics are unchanged. Therefore, a checksum verifies the identity of a specific artifact, not general training reproducibility

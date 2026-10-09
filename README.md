@@ -385,7 +385,34 @@ Note. Add FastAPI dependencies and install (if not done yet)
             docker build -t heart-disease-api:1.0 .
             docker run --rm -p 8000:8000 --name heart-disease-api heart-disease-api:1.0
 
+            docker ps
+
+
 7. Add API unit tests tests/test_api.py
 
             python -m pytest tests/test_api.py -v
             python -m pytest tests/ -v
+
+8. GitHub Actions pipeline
+
+            Git Push
+            ↓
+            Lint
+            ↓
+            Unit Tests
+            ↓
+            Download Dataset
+            ↓
+            Train + MLflow
+            ↓
+            Save Model
+            ↓
+            Build Docker Image
+            ↓
+            Start Container
+            ↓
+            GET /health
+            ↓
+            POST /predict
+            ↓
+            Upload Artifacts

@@ -60,6 +60,80 @@ jobs:
         run: |
           python -m src.models.check_inference
 
+      - name: Build Docker image
+        run: |
+          docker build -t heart-disease-api:ci .
+
+      - name: Start Docker container
+        run: |
+          docker run -d \
+            --name heart-disease-api-test \
+            -p 8000:8000 \
+            heart-disease-api:ci
+
+      - name: Test container health
+        run: |
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://localhost:8000/health; then
+              echo "Container health check passed"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker logs heart-disease-api-test
+          exit 1
+
+      - name: Test container prediction
+        run: |
+          python - <<'PY'
+          import json
+          import urllib.request
+
+          patient = {
+              "age": 55,
+              "sex": 1,
+              "cp": 2,
+              "trestbps": 140,
+              "chol": 250,
+              "fbs": 0,
+              "restecg": 1,
+              "thalach": 150,
+              "exang": 0,
+              "oldpeak": 1.2,
+              "slope": 2,
+              "ca": 0,
+              "thal": 3,
+          }
+
+          request = urllib.request.Request(
+              "http://localhost:8000/predict",
+              data=json.dumps(patient).encode(),
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+
+          with urllib.request.urlopen(request, timeout=10) as response:
+              assert response.status == 200
+              result = json.load(response)
+
+          assert result["prediction"] in (0, 1)
+          assert 0 <= result["probability"] <= 1
+          assert 0 <= result["confidence"] <= 1
+
+          print("Container prediction test passed:", result)
+          PY
+
+      - name: Show Docker logs
+        if: always()
+        run: |
+          docker logs heart-disease-api-test || true
+
+      - name: Stop Docker container
+        if: always()
+        run: |
+          docker rm -f heart-disease-api-test || true
+
       - name: Upload model artifacts
         if: success()
         uses: actions/upload-artifact@v4

@@ -683,3 +683,34 @@ Create a dashboard with four panels.
             python scripts/generate_test_traffic.py
 
 12. Save the Grafana dashboard configuration
+
+## Task 9 — Automated Continuous Deployment (CD) and End-to-End MLOps Pipeline
+
+![alt text](image-15.png)
+
+1. Create a reusable Kubernetes deployment script scripts/
+2. Create the registry-based Kubernetes manifest
+
+            cp kubernetes/deployment.yaml kubernetes/deployment-registry.yaml
+
+3. Open kubernetes/deployment-registry.yaml and make these changes:
+      - image: ghcr.io/example/placeholder:latest
+      - imagePullPolicy: IfNotPresent
+
+            Modify the script so it applies the registry manifest instead of the local manifest:
+            kubectl -n "$NAMESPACE" apply -f kubernetes/deployment-registry.yaml
+
+4. Make deployment atomic and version-specific
+5. Extend GitHub Actions for CD (.github/workflows/ci.yml)
+      - Save the tested Docker image (This preserves the exact image that passed your Docker smoke tests)
+      - Add the image-publishing job
+
+            GitHub supports publishing to GHCR using the workflow's GITHUB_TOKEN and packages: write permission, so no separate Docker Hub account or manually generated personal access token is needed for this publishing step.
+
+      - Make the published image pullable
+            1. Open your GitHub profile or organization package settings.
+            2. Find the newly published container package.
+            3. Open Package settings.
+            4. Under visibility settings, change it to Public, if permitted.
+
+6. Automate Kubernetes deployment testing (We will use kind (Kubernetes in Docker))

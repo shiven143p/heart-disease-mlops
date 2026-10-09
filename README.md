@@ -140,13 +140,13 @@ notebooks/01_eda.ipynb
 
 1. Create src/features/preprocess.py
 
-Numerical pipeline: Missing continuous values are replaced by the training-set median, followed by standardization. Standardization is particularly useful for Logistic Regression.
+- Numerical pipeline: Missing continuous values are replaced by the training-set median, followed by standardization.Standardization is particularly useful for Logistic Regression.
 
-Categorical pipeline: Missing categorical values are replaced by the most frequent training-set category. One-hot encoding prevents us from incorrectly implying an ordered numerical relationship between categories such as chest-pain types.
+- Categorical pipeline: Missing categorical values are replaced by the most frequent training-set category. One-hot encoding prevents us from incorrectly implying an ordered numerical relationship between categories such as chest-pain types.
 
-handle_unknown="ignore": If the API later receives a valid category that was not present during training, the encoder will not crash. We'll still enforce known clinical category ranges separately in the API validation layer.
+- handle_unknown="ignore": If the API later receives a valid category that was not present during training, the encoder will not crash. We'll still enforce known clinical category ranges separately in the API validation layer.
 
-sparse_output=False: Keeps the transformed dataset as a dense array, which is manageable for this small dataset.
+- sparse_output=False: Keeps the transformed dataset as a dense array, which is manageable for this small dataset.
 Most importantly, build_preprocessor() returns an unfitted transformer. We do not call .fit() on the complete dataset.
 
 2. Create unit tests for preprocessing tests/test_preprocessing.py
@@ -163,18 +163,20 @@ Most importantly, build_preprocessor() returns an unfitted transformer. We do no
 
 ![alt text](image-1.png)
 
+Note: Install joblib (if not done yet)
+
 1. Create src/models/evaluate.py
 2. Create src/models/train.py
 
 It will:
-      1. Load the dataset.
-      2. Perform a stratified train/test split.
-      3. Construct a complete preprocessing-plus-classifier pipeline.
-      4. Tune both classifiers with stratified 5-fold CV.
-      5. Compare their cross-validation ROC-AUC scores.
-      6. Select the best-performing model.
-      7. Evaluate it once on the held-out test set.
-      8. Save the complete pipeline and evaluation artifacts.
+      i. Load the dataset.
+      ii. Perform a stratified train/test split.
+      iii. Construct a complete preprocessing-plus-classifier pipeline.
+      iv. Tune both classifiers with stratified 5-fold CV.
+      v. Compare their cross-validation ROC-AUC scores.
+      vi. Select the best-performing model.
+      vii. Evaluate it once on the held-out test set.
+      viii. Save the complete pipeline and evaluation artifacts.
 
 - GridSearchCV runs preprocessing inside each CV fold, avoiding leakage.
 - n_jobs=-1 uses available CPU cores for the search. On a resource-limited Virtual Lab, we can change this to 1.
@@ -188,3 +190,71 @@ It will:
 4. Add model tests tests/test_model.py
 
       python -m pytest tests/ -v
+
+      Output:
+
+            Training: logistic_regression
+            Best CV ROC-AUC: 0.9028
+            Best parameters: {'classifier__C': 0.1, 'classifier__class_weight': 'balanced'}
+
+            Training: random_forest
+            Best CV ROC-AUC: 0.8984
+            Best parameters: {'classifier__max_depth': None, 'classifier__min_samples_split': 5, 'classifier__n_estimators': 100}
+
+            Selected model: logistic_regression
+
+            Held-out test metrics:
+            accuracy: 0.8852
+            precision: 0.8387
+            recall: 0.9286
+            f1: 0.8814
+            roc_auc: 0.9654 
+      ![alt text](image-2.png)
+
+## Task 3 — MLflow Experiment Tracking
+![alt text](image-3.png)
+
+Component	            Technology
+Experiment tracking	MLflow
+Tracking database	      SQLite
+Model serialization	MLflow + joblib
+Artifacts	            Local filesystem
+Experiment dashboard	MLflow UI
+
+Note: Install mlflow (if not done yet)
+
+      python -c "import mlflow; print(mlflow.__version__)"
+
+1. Update src/models/train.py (add MLflow logging around the training loop)
+      - Add imports
+      - Configure the tracking store
+      - Modify the model-training loop
+      - Log final test results
+
+2. Run training with MLflow
+
+      python -m src.models.train
+
+3. Open the MLflow dashboard
+
+      mlflow ui --backend-store-uri ./mlruns --host 127.0.0.1 --port 5000
+
+      - Each model gets its own MLflow run.
+      - Hyperparameters and cross-validation results are logged.
+      - Both trained pipelines are logged to MLflow.
+      - Only the selected model gets final held-out test metrics.
+      - Confusion matrix, ROC curve and CSV reports are attached to the selected run.
+      - The selected model is exported to models/heart_disease_pipeline.joblib.
+
+      In the dashboard, verify that:
+
+      - The `heart-disease-classification` experiment exists.
+      - Both Logistic Regression and Random Forest runs appear.
+      - Both runs contain selected hyperparameters and CV ROC-AUC.
+      - Both runs contain a saved model and CV results.
+      - The selected model also contains test metrics, confusion matrix and ROC curve.
+
+4. Verify the existing tests still pass
+
+MLflow supports cloudpickle serialization for scikit-learn models. This avoids the skops trusted-type validation that is causing your error.
+Security note: cloudpickle artifacts must only be loaded from trusted sources because deserialization can execute arbitrary code.

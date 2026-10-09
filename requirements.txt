@@ -7,3 +7,4 @@ jupyter
 ucimlrepo
 pytest
 joblib
+mlflow

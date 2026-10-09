@@ -13,7 +13,6 @@ from src.features.preprocess import (
     build_preprocessor,
 )
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_PATH = PROJECT_ROOT / "data" / "processed" / "heart_disease.csv"
 

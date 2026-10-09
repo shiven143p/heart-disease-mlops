@@ -9,7 +9,6 @@ import pandas as pd
 
 from src.features.preprocess import FEATURE_COLUMNS
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 DEFAULT_MODEL_PATH = (

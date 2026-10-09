@@ -8,3 +8,4 @@ ucimlrepo
 pytest
 joblib
 mlflow
+ruff

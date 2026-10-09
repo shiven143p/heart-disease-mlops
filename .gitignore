@@ -43,6 +43,7 @@ dist/
 # Generated trained model artifacts
 models/*.joblib
 models/*.json
+models/*.sha256
 
 # Generated evaluation artifacts
 reports/model_evaluation/
@@ -55,3 +56,4 @@ mlflow.db-wal
 # MLflow artifacts
 mlruns/
 mlartifacts/
+

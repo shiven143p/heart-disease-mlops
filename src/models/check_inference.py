@@ -6,7 +6,6 @@ from src.models.predict import (
     predict_heart_disease,
 )
 
-
 SAMPLE_PATIENT = {
     "age": 55,
     "sex": 1,

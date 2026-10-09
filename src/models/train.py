@@ -8,7 +8,6 @@ import joblib
 import mlflow
 import mlflow.sklearn
 import pandas as pd
-
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import (
@@ -23,13 +22,11 @@ from src.features.preprocess import (
     TARGET_COLUMN,
     build_preprocessor,
 )
-
 from src.models.evaluate import (
     calculate_metrics,
     save_evaluation_plots,
     save_metrics,
 )
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 

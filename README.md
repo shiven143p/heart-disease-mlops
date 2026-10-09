@@ -307,3 +307,42 @@ Note: Verify your existing model artifact models/heart_disease_pipeline.joblib a
 
       Later, the checksum can be used to verify that the model artifact has not changed during copying or deployment.
       Note that retraining may produce a different binary checksum even when predictions and metrics are unchanged. Therefore, a checksum verifies the identity of a specific artifact, not general training reproducibility
+
+## Task 5 — CI/CD Pipeline & Automated Testing
+
+![alt text](image-5.png)
+
+1. Install Ruff and check code quality
+
+            ruff check src/ tests/
+            To Auto Fix: ruff check src/ tests/ --fix
+
+2. Create pyproject.toml
+      - This checks important Python errors, unused imports, and import ordering.
+
+3. Rerun to make sure all checks passed
+
+            ruff check src/ tests/ --fix
+            ruff check src/ tests/
+
+4. Prepare the GitHub repository (Note: Commands optional if already used repos)
+
+            git branch --show-current
+            git branch -M main
+            git remote add origin https://github.com/YOUR_USERNAME/heart-disease-mlops.git
+
+5. Create the GitHub Actions workflow
+
+            mkdir -p .github/workflows
+
+6. Create .github/workflows/ci.yml
+7. Update dependency lock
+
+            python -m pip freeze > requirements-lock.txt
+
+8. Run a local precheck
+
+            ruff check src/ tests/
+            python -m pytest tests/ -v
+            python -m src.data.validate
+            python -m src.models.check_inference

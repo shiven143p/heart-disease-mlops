@@ -259,6 +259,8 @@ Note: Install mlflow (if not done yet)
 MLflow supports cloudpickle serialization for scikit-learn models. This avoids the skops trusted-type validation that is causing your error.
 Security note: cloudpickle artifacts must only be loaded from trusted sources because deserialization can execute arbitrary code.
 
+5. Log screenshots of successful mflow runs, tracks, flows screenshots/mlflow
+
 ## Task 4 — Model Packaging & Reproducibility
 
 ![alt text](image-4.png)
@@ -346,3 +348,44 @@ Note: Verify your existing model artifact models/heart_disease_pipeline.joblib a
             python -m pytest tests/ -v
             python -m src.data.validate
             python -m src.models.check_inference
+
+9. Verify GitHub Actions in Github repos
+10. Log screenshots of successful Github actions flows screenshots/github-actions
+
+## Task 6 — Model Containerization
+
+- A FastAPI or Flask API.
+- A /predict endpoint accepting JSON.
+- A response containing prediction and confidence.
+- A Docker image that builds and runs locally.
+- A successful sample prediction through the container
+
+Note. Add FastAPI dependencies and install (if not done yet)
+
+1. Create src/api/schemas.py 
+   Validates the 13 patient input features
+2. Create src/api/main.py
+3. Run FastAPI locally
+
+            python -m uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+
+4. Create .dockerignore
+      
+      we're excluding training data, MLflow databases, notebooks and test files. The inference container needs only the application code, dependencies and trained model.
+
+5. Create Dockerfile
+      
+      The model is ignored by Git, but Docker can still copy it from your local filesystem if it exists and is not excluded by .dockerignore.
+      This Dockerfile is intended for local validation. Before we extend GitHub Actions to build and publish Docker images, we'll make the model artifact available explicitly from the training job, rather than relying on an untracked local file.
+      This is a standard testing technique called mocking.
+
+6. Build and run Docker
+
+            python -m pip freeze > requirements-lock.txt
+            docker build -t heart-disease-api:1.0 .
+            docker run --rm -p 8000:8000 --name heart-disease-api heart-disease-api:1.0
+
+7. Add API unit tests tests/test_api.py
+
+            python -m pytest tests/test_api.py -v
+            python -m pytest tests/ -v

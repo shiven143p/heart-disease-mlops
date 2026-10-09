@@ -9,3 +9,6 @@ pytest
 joblib
 mlflow
 ruff
+fastapi
+uvicorn
+httpx

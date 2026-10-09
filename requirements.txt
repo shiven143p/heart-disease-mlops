@@ -12,3 +12,4 @@ ruff
 fastapi
 uvicorn
 httpx
+prometheus-client

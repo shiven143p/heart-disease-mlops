@@ -534,3 +534,146 @@ Resolev steps :
             kubectl scale deployment heart-disease-api --replicas=2
 
 ![alt text](image-12.png)
+
+## Task 8 — Monitoring & Logging
+
+![alt text](image-13.png)
+
+To know:
+- How many requests were received?
+- How many succeeded or failed?
+- How long did predictions take?
+- How many predictions returned class 0 versus class 1?
+- Is the application still running?
+
+GET /metrics (new endpoint)
+- Total prediction requests.
+- Successful and failed requests.
+- API request latency.
+- Prediction class counts.
+
+### Phase 1 — Add monitoring to FastAPI
+
+Note: Install prometheus-client (if not done yet)
+
+            python -c "import prometheus_client; print('Prometheus client installed')"
+
+1. Create src/api/monitoring.py
+      - Define the metrics collected by the application
+
+2. Update src/api/main.py
+3. Run the tests
+
+            python -m pytest tests/ -v
+
+            ruff check src/ tests/
+
+ 4. Add monitoring tests tests/test_monitoring.py     
+
+            python -m pytest tests/ -v
+
+### Phase 2 — Rebuild Docker with monitoring
+
+1. Update dependency lock and build
+
+            python -m pip freeze > requirements-lock.txt
+            docker build -t heart-disease-api:1.1 .
+
+            Stop the old container if it is running: 
+            docker stop heart-disease-api
+
+            Stop the old container if it is running:
+            docker run --rm -p 8000:8000 --name heart-disease-api heart-disease-api:1.1
+
+### Phase 3 — Prepare Kubernetes monitoring
+
+1. Load the new Docker image into Minikube
+
+      minikube image load heart-disease-api:1.1
+
+2. Change  kubernetes/deployment.yaml "image: heart-disease-api:1.0" to "image: heart-disease-api:1.1"
+
+3. Apply the update
+
+            kubectl apply -f kubernetes/deployment.yaml
+
+            Wait for Kubernetes to replace the old pods:
+            kubectl rollout status deployment/heart-disease-api
+            kubectl get pods -l app=heart-disease-api
+
+### Phase 4 — Prometheus and Grafana
+- FastAPI generates numerical information about requests.
+- Prometheus periodically visits /metrics and saves that information.
+- Grafana reads the saved information and displays graphs.
+
+![alt text](image-14.png)
+
+1. Create the monitoring directory
+
+            mkdir -p monitoring/kubernetes
+
+2. Configure Prometheus monitoring/kubernetes/prometheus-config.yaml
+      - Prometheus need permission to discover pods through the Kubernetes API.
+      - monitoring/kubernetes/prometheus-rbac.yaml 
+      - This grants only the pod-discovery permissions needed in the default namespace.
+
+3. Deploy Prometheus monitoring/kubernetes/prometheus-deployment.yaml
+- Note: Prometheus will use ephemeral storage. Historical metrics may be lost if its pod is recreated.
+
+4. Create monitoring/kubernetes/prometheus-service.yaml
+- The ClusterIP Service lets Grafana reach Prometheus within Kubernetes.
+
+5. Deploy Grafana monitoring/kubernetes/grafana-deployment.yaml
+
+6. Create monitoring/kubernetes/grafana-service.yaml
+
+7. Install Prometheus and Grafana into Minikube
+
+            To reduce the chance of another image-download problem, first pull the images:
+            docker pull prom/prometheus:v3.7.3
+            docker pull grafana/grafana:12.2.0
+
+            Load them into Minikube:
+            minikube image load prom/prometheus:v3.7.3
+            minikube image load grafana/grafana:12.2.0
+
+            Now apply the manifests in the order:
+            kubectl apply -f monitoring/kubernetes/prometheus-rbac.yaml
+            kubectl apply -f monitoring/kubernetes/prometheus-config.yaml
+            kubectl apply -f monitoring/kubernetes/prometheus-deployment.yaml
+            kubectl apply -f monitoring/kubernetes/prometheus-service.yaml
+
+            kubectl apply -f monitoring/kubernetes/grafana-deployment.yaml
+            kubectl apply -f monitoring/kubernetes/grafana-service.yaml
+
+            Wait for the applications:
+            kubectl rollout status deployment/prometheus --timeout=180s
+            kubectl rollout status deployment/grafana --timeout=180s
+            
+            Check:
+            kubectl get pods
+            kubectl get services
+
+8. Open Prometheus 
+
+            kubectl port-forward service/prometheus-service 9090:9090
+            Navigate to: Status → Target health
+            In the Prometheus query interface, enter: heart_disease_http_requests_total, heart_disease_predictions_total
+
+9. Open Grafana
+
+            kubectl port-forward service/grafana-service 3000:3000
+
+            Log in using the credentials configured.
+            Then add Prometheus as a data source.
+            Go to Connections → Data sources → Add new data source → Prometheus.
+            Use this URL: http://prometheus-service:9090
+            Important: Use the Kubernetes Service address, not localhost:9090
+
+10. Create the Grafana dashboard
+Create a dashboard with four panels.
+- Panel	PromQL query
+- Prediction requests over time	sum(rate(heart_disease_http_requests_total{endpoint="/predict"}[5m]))
+- Prediction counts by class	sum by (prediction) (heart_disease_predictions_total)
+- Average API latency	sum(rate(heart_disease_http_request_duration_seconds_sum{endpoint="/predict"}[5m])) / sum(rate(heart_disease_http_request_duration_seconds_count{endpoint="/predict"}[5m]))
+- Prediction processing errors	sum(heart_disease_prediction_errors_total)

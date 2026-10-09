@@ -80,7 +80,7 @@
             "uid": "dg0psm37awpoge"
           },
           "editorMode": "code",
-          "expr": "sum(rate(heart_disease_http_requests_total{endpoint=\"/predict\"}[5m]))",
+          "expr": "sum(heart_disease_http_requests_total{endpoint=\"/predict\"}) or vector(0)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -88,7 +88,7 @@
           "refId": "A"
         }
       ],
-      "title": "Prediction requests over time",
+      "title": "Total Prediction Requests",
       "type": "stat"
     },
     {
@@ -99,29 +99,9 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
           },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 1,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
+          "displayName": "Class ${__field.labels.prediction}",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -147,26 +127,28 @@
       },
       "id": 2,
       "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
+        "displayMode": "gradient",
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
-        "orientation": "auto",
-        "showValue": "auto",
-        "stacking": "none",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
       },
       "pluginVersion": "12.2.0",
       "targets": [
@@ -179,7 +161,7 @@
         }
       ],
       "title": "Prediction counts by class",
-      "type": "barchart"
+      "type": "bargauge"
     },
     {
       "datasource": {
@@ -238,7 +220,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "s"
         },
         "overrides": [
           {
@@ -297,7 +280,7 @@
           "refId": "A"
         }
       ],
-      "title": "Average API latency",
+      "title": "Average Prediction API Latency",
       "type": "timeseries"
     },
     {
@@ -310,18 +293,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {
-            "axisPlacement": "auto",
-            "fillOpacity": 70,
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineWidth": 0,
-            "spanNulls": false
-          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -332,7 +303,7 @@
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 2
               }
             ]
           }
@@ -347,33 +318,34 @@
       },
       "id": 4,
       "options": {
-        "alignValue": "left",
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "mergeValues": true,
-        "rowHeight": 0.9,
-        "showValue": "auto",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
       "pluginVersion": "12.2.0",
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum(heart_disease_prediction_errors_total)",
+          "expr": "sum(heart_disease_prediction_errors_total) or vector(0)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Prediction processing errors",
-      "type": "state-timeline"
+      "title": "Prediction Processing Errors",
+      "type": "stat"
     }
   ],
   "preload": false,
@@ -390,5 +362,5 @@
   "timezone": "browser",
   "title": "heart-disease-dashboard",
   "uid": "ad7vkkn",
-  "version": 9
+  "version": 17
 }
